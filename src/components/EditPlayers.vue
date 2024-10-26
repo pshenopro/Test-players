@@ -2,78 +2,71 @@
   <h1>Редактирование игроков</h1>
 
   <div
-    v-for="item in usersLife"
-    :key="item.name"
+    v-for="(item, i) in playersList"
+    :key="i"
     class="row"
   >
-      <input id="name" v-model="item.name">
-      <a class="button" href="#" @click.prevent="minusLife(item)">-</a>
-      <span class="lifeCount">{{item.life}}</span>
-      <a class="button" href="#" @click.prevent="plusLife(item)">+</a>
+      <input v-model="item.name" type="text">
+      <button
+          type="button"
+          class="button"
+          :disabled="item.life === 0"
+          @click="onRating(item, 'minus')">-</button>
+      <span class="life">{{item.life}}</span>
+      <button type="button" class="button" @click="onRating(item, 'plus')">+</button>
   </div>
-  
+
   <h2>Рейтинг</h2>
   <table>
     <tr
-    v-for="(item, index) in rating"
-    :key="index"
+        v-for="(item, index) in rating"
+        :class="{
+            'rating_minus': item.minus,
+            'rating_plus': item.plus
+        }"
+        :key="index"
     >
-    <td v-text="`${index + 1}`"></td>
-    <td v-text="`У игрока <b>${item.name}</b> ${item.life} жизней`"></td>
-  </tr>
+        <td v-text="`${index + 1}`"></td>
+        <td v-html="`У игрока <b>${item.name}</b> ${item.life} жизней`"></td>
+    </tr>
   </table>
 </template>
 
-<script>
-export default {
-  name: 'LifeCounter',
+<script setup>
+import { computed } from 'vue'
 
-  props: {
-    playersList: {
-      type: Array
-    },
-  },
-  
-  data () {
-    return {
-    };
-  },
-  
-  created() {
-    for (let i = 0; i < this.playersList; i++) {
-      this.usersLife.push({
-        name: this.playersList.name,
-        life: this.playersList.life
-      });
-    }
-  },
-  
-  computed: {
-    usersLife () {
-      return [...this.playersList]
-    },
-    rating () {
-      let places = this.usersLife;
-  
-      places.sort((a, b) => b.life - a.life);
-     
-      return places;
-    }
-  },
-  
-  methods: {
-    plusLife (item) {
-      item.life++;
-    },
+import { playersList } from '@/composables/usePlayers'
 
-    minusLife (item) {
-      item.life--;
-    }
-  },
+const onRating = async (el, type) => {
+    if (type === 'minus') el.life--
+
+    if (type === 'plus') el.life++
+
+    el[type] = true
+
+    await new Promise(res => {
+        setTimeout(() => {
+            res()
+        }, 300)
+    }).then(() => {
+        el[type] = false
+    })
 }
+
+const rating = computed(() => [...playersList.value].sort((a, b) => b.life - a.life))
 </script>
 
 <style lang="scss">
+    .rating_minus {
+        animation-name: toMinus;
+        animation-duration: .4s;
+    }
+
+    .rating_plus {
+        animation-name: toPlus;
+        animation-duration: .4s;
+    }
+
     .row {
         display: flex;
         align-items: center;
@@ -86,12 +79,13 @@ export default {
         }
 
         .button {
-          width: 24px;
-          height: 24px;
+            width: 24px;
+            height: 24px;
         }
 
         .life {
-          margin: 0 12px;
+            width: 20px;
+            margin: 0 12px;
         }
     }
 
@@ -101,5 +95,23 @@ export default {
       td {
         border: 1px solid #2c3e50;
       }
+    }
+
+    @keyframes toMinus {
+        from {
+            outline: 2px solid red;
+        }
+        to {
+            outline: 2px solid transparent;
+        }
+    }
+
+    @keyframes toPlus {
+        from {
+            outline: 2px solid lightgreen;
+        }
+        to {
+            outline: 2px solid transparent;
+        }
     }
 </style>

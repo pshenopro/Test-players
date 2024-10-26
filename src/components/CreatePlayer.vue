@@ -1,54 +1,57 @@
 <template>
     <h1>Добавить нового игрока</h1>
     <div class="row">
-        <input id="name" type="text" v-model="players_name" placeholder="Имя"/>
-        <input id="life" type="number" v-model="players_life" placeholder="Жизней" />
-        <button type="button" v-on:click="createPlayer">Создать</button>
+        <input id="name" type="text" v-model="state.name" placeholder="Имя"/>
+        <input id="life" type="number" v-model.number="state.life" placeholder="Жизней" />
+        <button type="button" @click="createPlayer">Создать</button>
+    </div>
+
+    <div v-if="errors.length" style="color: red; padding-top: 20px">
+        <h4 v-for="error in errors" :key="error">
+            {{ error }}
+        </h4>
     </div>
 </template>
 
 
-<script>
-export default {
-  name: 'CreatePlayer',
-  
-  data () {
-    return {
-      players: [],
-      players_name: '',
-      players_life: ''
-    };
-  },
-  
-  methods: {
-    createPlayer() {
+<script setup>
+import { reactive, ref } from 'vue'
+import { playersList } from '@/composables/usePlayers'
 
-        if(this.players_name === '' || this.players_name === undefined) {
-            alert('Укажите имя');
-            return;
-        }
+const errors = ref([])
+const state = reactive({
+    name: '',
+    life: 0
+})
 
-        if(this.players_life === '' || this.players_life === undefined) {
-            alert('Укажите количество жизней');
-            return;
-        }
+const valid = () => {
+    errors.value = []
 
-        if(this.players_life <= 0) {
-            alert('Значение не может быть больше нуля');
-            return;
-        }
+    let checkFail = false
 
-        this.players.push({
-            'name': this.players_name,
-            'life': this.players_life,
-        })
-
-        this.players_name = '';
-        this.players_life = '';
-
-        this.$emit('players-list', this.players);
+    if (!state.name || state.name.length < 2) {
+        errors.value.push('Укажите имя (Минимум 3 символа)')
+        checkFail = true
     }
-  },
+
+    if (!state.life) {
+        errors.value.push('Значение не может быть меньше или ровно нулю');
+        checkFail = true
+    }
+
+    return checkFail
+}
+
+const createPlayer = () => {
+    if (valid()) return
+
+    playersList.value?.push({
+        ...state
+    })
+    Object.assign(state, {
+        name: '',
+        life: 0
+    })
 }
 </script>
 
